@@ -71,9 +71,18 @@ describe("anchor-escrow-interface", () => {
   });
 
   it("Initialize mints and ATAs", async () => {
-    const mintA = await createMint(connection, maker.payer, provider.publicKey, null, 9);
-    const mintB = await createMint(connection, maker.payer, provider.publicKey, null, 9);
-    const mintC = await createMint(connection, maker.payer, provider.publicKey, null, 9);
+    mintA = await createMint(connection, maker.payer, provider.publicKey, null, 9, Keypair.generate(), {commitment: "confirmed"}, tokenProgram);
+    mintB = await createMint(connection, maker.payer, provider.publicKey, null, 9);
+    mintC = await createMint(connection, maker.payer, provider.publicKey, null, 9);
+
+    makerAtaA = getAssociatedTokenAddressSync(mintA, maker.publicKey, false, tokenProgram);
+    makerAtaB = getAssociatedTokenAddressSync(mintB, maker.publicKey, false, tokenProgram);
+    makerAtaC = getAssociatedTokenAddressSync(mintC, maker.publicKey, false, token2022Program);
+
+    takerAtaA = getAssociatedTokenAddressSync(mintA, taker.publicKey, false, tokenProgram);
+    takerAtaB = getAssociatedTokenAddressSync(mintB, taker.publicKey, false, tokenProgram);
+    takerAtaC = getAssociatedTokenAddressSync(mintC, taker.publicKey, false, token2022Program);
+    
     console.log("\n--------------------------------");
     console.log("Mint A:", mintA);
     console.log("Mint B:", mintB);

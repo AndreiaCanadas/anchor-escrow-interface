@@ -95,6 +95,7 @@ impl<'info> Take<'info> {
         
         // in case mint_b token program is the same as mint_a token program
         // use maker_ata_b and token_program
+        // Note: token program of a mint account can be determined by checking the owner property of the account
         if self.mint_b.to_account_info().owner == &self.token_program.key() {
             assert!(self.maker_ata_b.is_some());
             let cpi_program = self.token_program.to_account_info();
