@@ -234,10 +234,10 @@ Accounts:
 - `mint_a`: Mint of the token being received by taker
 - `mint_b`: Mint of the token being sent by taker
 - `vault`: Vault holding mint_a until exchange completes (mutable)
-- `maker_ata_b`: <Optional> Maker's ATA for mint_b (same token program as mint_a, init_if_needed)
-- `maker_ata_b_option`: <Optional> Maker's ATA for mint_b (different token program, init_if_needed)
-- `taker_ata_b`: <Optional> Taker's ATA for mint_b (mutable, tokens transferred from here, same token program as mint_a)
-- `taker_ata_b_option`: <Optional>  Taker's ATA for mint_b (mutable, tokens transferred from here, different token program as mint_a)
+- `maker_ata_b`: < Optional > Maker's ATA for mint_b (same token program as mint_a, init_if_needed)
+- `maker_ata_b_option`: < Optional > Maker's ATA for mint_b (different token program, init_if_needed)
+- `taker_ata_b`: < Optional > Taker's ATA for mint_b (mutable, tokens transferred from here, same token program as mint_a)
+- `taker_ata_b_option`: < Optional >  Taker's ATA for mint_b (mutable, tokens transferred from here, different token program as mint_a)
 - `taker_ata_a`: Taker's ATA for mint_a (init_if_needed)
 - `escrow`: Escrow state account (closed after exchange, rent returned to maker)
 - `token_program`: Token program interface for mint_a
