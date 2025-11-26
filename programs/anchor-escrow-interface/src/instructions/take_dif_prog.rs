@@ -1,11 +1,11 @@
 use anchor_lang::prelude::*;
-use crate::{state::Escrow, errors::EscrowError};
+use crate::state::Escrow;
 use anchor_spl::{
     associated_token::AssociatedToken, token_interface::{close_account, transfer_checked, CloseAccount, Mint, TokenAccount, TokenInterface, TransferChecked}
 };
 
 #[derive(Accounts)]
-pub struct Take<'info> {
+pub struct TakeDifProg<'info> {
     #[account(mut)]
     pub maker: SystemAccount<'info>,
 
@@ -13,14 +13,16 @@ pub struct Take<'info> {
     pub taker: Signer<'info>,
 
     // mint of the token the maker will deposit in the escrow
-    // the token program is the token program of the mint_a
     #[account(
         mint::token_program = token_program,
     )]
     pub mint_a: InterfaceAccount<'info, Mint>,      
 
     // mint of the token the maker wants to receive
-    // the token program can be the same as mint_a or a different token program (in this case token program option)
+    // different token program from mint_a
+    #[account(
+        mint::token_program = token_program_2,
+    )]
     pub mint_b: InterfaceAccount<'info, Mint>,      
 
     #[account(
@@ -31,44 +33,23 @@ pub struct Take<'info> {
     )]
     pub vault: InterfaceAccount<'info, TokenAccount>,
 
-    // two option accounts for the maker ata for mint_b are used, to allow initialization if needed in constraints
-    // as token program needs to be declared when using InterfaceAccount
-
-    // Option 1: maker ata for mint_b if token program is the same as mint_a
     #[account(
         init_if_needed,
         payer = taker,
         associated_token::mint = mint_b,
         associated_token::authority = maker,
-        associated_token::token_program = token_program,
+        associated_token::token_program = token_program_2,
     )]
-    pub maker_ata_b: Option<InterfaceAccount<'info, TokenAccount>>,
-    // Option 2: maker ata for mint_b if token program is different from mint_a
-    #[account(
-        init_if_needed,
-        payer = taker,
-        associated_token::mint = mint_b,
-        associated_token::authority = maker,
-        associated_token::token_program = token_program_option,
-    )]
-    pub maker_ata_b_option: Option<InterfaceAccount<'info, TokenAccount>>,
+    pub maker_ata_b: InterfaceAccount<'info, TokenAccount>,
 
-    // Option 1: taker ata for mint_b if token program is the same as mint_a
-    #[account(
-        mut,
-        associated_token::mint = mint_b,
-        associated_token::authority = taker,
-        associated_token::token_program = token_program,
-    )]
-    pub taker_ata_b: Option<InterfaceAccount<'info, TokenAccount>>,
     // Option 2: taker ata for mint_b if token program is different from mint_a
     #[account(
         mut,
         associated_token::mint = mint_b,
         associated_token::authority = taker,
-        associated_token::token_program = token_program_option,
+        associated_token::token_program = token_program_2,
     )]
-    pub taker_ata_b_option: Option<InterfaceAccount<'info, TokenAccount>>,
+    pub taker_ata_b: InterfaceAccount<'info, TokenAccount>,
 
     #[account(
         init_if_needed,
@@ -93,49 +74,24 @@ pub struct Take<'info> {
     pub system_program: Program<'info, System>,
 
     pub token_program: Interface<'info, TokenInterface>,
-    pub token_program_option: Interface<'info, TokenInterface>,
+    pub token_program_2: Interface<'info, TokenInterface>,
 
     pub associated_token_program: Program<'info, AssociatedToken>,
 }
-impl<'info> Take<'info> {
+impl<'info> TakeDifProg<'info> {
 
       // Transfers the amount the maker wants to receive (mint_b) from the taker to the maker.
       pub fn transfer_to_maker(&mut self) -> Result<()> {
         
-        // in case mint_b token program is the same as mint_a token program
-        // use maker_ata_b and token_program
-        // Note: token program of a mint account can be determined by checking the owner property of the account
-        if self.mint_b.to_account_info().owner == &self.token_program.key() {
-            assert!(self.maker_ata_b.is_some());
-            assert!(self.taker_ata_b.is_some());
-            let cpi_program = self.token_program.to_account_info();
-            let cpi_accounts = TransferChecked {
-                from: self.taker_ata_b.as_ref().unwrap().to_account_info(),
-                mint: self.mint_b.to_account_info(),
-                to: self.maker_ata_b.as_ref().unwrap().to_account_info(),
-                authority: self.taker.to_account_info(),
-            };
-            let cpi_ctx: CpiContext<TransferChecked> = CpiContext::new(cpi_program, cpi_accounts);
-            transfer_checked(cpi_ctx, self.escrow.amount_receive, self.mint_b.decimals)?;
-        }
-        // in case mint_b token program is different from mint_a token program
-        // use maker_ata_b_option and token_program_option
-        else if self.mint_b.to_account_info().owner == &self.token_program_option.key() {
-            assert!(self.maker_ata_b_option.is_some());
-            assert!(self.taker_ata_b_option.is_some());
-            let cpi_program = self.token_program_option.to_account_info();
-            let cpi_accounts = TransferChecked {
-                from: self.taker_ata_b_option.as_ref().unwrap().to_account_info(),
-                mint: self.mint_b.to_account_info(),
-                to: self.maker_ata_b_option.as_ref().unwrap().to_account_info(),
-                authority: self.taker.to_account_info(),
-            };
-            let cpi_ctx: CpiContext<TransferChecked> = CpiContext::new(cpi_program, cpi_accounts);
-            transfer_checked(cpi_ctx, self.escrow.amount_receive, self.mint_b.decimals)?;
-        }
-        else {
-            return Err(EscrowError::InvalidTokenProgram.into());
-        }
+        let cpi_program = self.token_program_2.to_account_info();
+        let cpi_accounts = TransferChecked {
+            from: self.taker_ata_b.to_account_info(),
+            mint: self.mint_b.to_account_info(),
+            to: self.maker_ata_b.to_account_info(),
+            authority: self.taker.to_account_info(),
+        };
+        let cpi_ctx: CpiContext<TransferChecked> = CpiContext::new(cpi_program, cpi_accounts);
+        transfer_checked(cpi_ctx, self.escrow.amount_receive, self.mint_b.decimals)?;
         
         Ok(())
     }

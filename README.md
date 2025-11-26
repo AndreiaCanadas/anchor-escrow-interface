@@ -188,7 +188,15 @@ pub struct Take<'info> {
         associated_token::authority = taker,
         associated_token::token_program = token_program,
     )]
-    pub taker_ata_b: InterfaceAccount<'info, TokenAccount>,
+    pub taker_ata_b: Option<InterfaceAccount<'info, TokenAccount>>,
+
+    #[account(
+        mut,
+        associated_token::mint = mint_b,
+        associated_token::authority = taker,
+        associated_token::token_program = token_program_option,
+    )]
+    pub taker_ata_b_option: Option<InterfaceAccount<'info, TokenAccount>>,
 
     #[account(
         init_if_needed,

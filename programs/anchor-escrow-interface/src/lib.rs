@@ -2,10 +2,14 @@
 #![allow(deprecated)]
 
 use anchor_lang::prelude::*;
+
 mod instructions;
 mod state;
 mod errors;
+
 use instructions::*;
+
+// mod tests;
 
 declare_id!("7oyEmtYJmcqkG5GDQq99iM1NufFuXLwDFMCHRdmnS94t");
 
@@ -26,7 +30,19 @@ pub mod anchor_escrow_interface {
         Ok(())
     }
 
+    pub fn take_same_prog(ctx: Context<TakeSameProg>) -> Result<()> {
+        ctx.accounts.transfer_to_maker()?;
+        ctx.accounts.transfer_to_taker()?;
+        ctx.accounts.close_vault()?;
+        Ok(())
+    }
 
+    pub fn take_dif_prog(ctx: Context<TakeDifProg>) -> Result<()> {
+        ctx.accounts.transfer_to_maker()?;
+        ctx.accounts.transfer_to_taker()?;
+        ctx.accounts.close_vault()?;
+        Ok(())
+    }
 
 }
 

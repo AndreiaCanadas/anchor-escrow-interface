@@ -51,7 +51,7 @@ pub struct Make<'info> {
     pub system_program: Program<'info, System>,
 
     // just one token program is needed (the same as mint_a to initialize the vault)
-    //but both token programs (SPL token or SPL Token 2022) are supported -> hence using Interface
+    // but both token programs (SPL token or SPL Token 2022) are supported -> hence using Interface
     pub token_program: Interface<'info, TokenInterface>,
 
     // associated token program is used to initialize the vault (ATA)
